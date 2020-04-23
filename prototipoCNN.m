@@ -24,7 +24,7 @@ layers = [
 ];
 
 % Opzioni del Training
-options = trainingOptions('sgdm','InitialLearnRate',0.000001,'Momentum',0.9,'L2Regularization',0.000001,'Plots','training-progress');
+options = trainingOptions('sgdm','InitialLearnRate',0.00001,'Momentum',0.9,'L2Regularization',0.000001,'Plots','training-progress');
 
 
 % 5-fold cross validation
