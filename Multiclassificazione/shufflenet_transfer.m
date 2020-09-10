@@ -3,26 +3,31 @@
 clear  %Clear workspace
 clc    %Clear command window
 
-    
+%Clear augmented images
+delete_aug_images('s');
+delete_aug_images('t');
+delete_aug_images('g');
+
 %Dataset acquisition
 [trainImgs, testImgs] = create_sets(300);
-for h=1:5
-    
-
 
 %Online data augmentation 
 imageAugmenter = imageDataAugmenter('RandRotation',[-90,90],...
     'RandXTranslation',[-10 10],'RandYTranslation',[-10 10],...
     'RandXReflection',true,'RandYReflection',true);
 
+
+for h=1:5
+
 trainImgs_a = augmentedImageDatastore([224 224], trainImgs,'ColorPreprocessing','gray2rgb',...
     'DataAugmentation',imageAugmenter);
 
 testImgs_a = augmentedImageDatastore([224 224], testImgs,'ColorPreprocessing','gray2rgb');
+validImgs_a = augmentedImageDatastore([224 224], validImgs,'ColorPreprocessing','gray2rgb');
 
 
 %Modifying pretrained network
-a = fullyConnectedLayer(3,'Name','FCL');
+a = fullyConnectedLayer(4,'Name','FCL');
 b = classificationLayer('Name','fine');
 lgraph = layerGraph(shufflenet);
 lgraph = replaceLayer(lgraph,'node_202',a);
@@ -31,9 +36,11 @@ lgraph = replaceLayer(lgraph,'ClassificationLayer_node_203',b);
 %Training options
 options = trainingOptions('adam',...
     'InitialLearnRate',1e-4,...
-    'MiniBatchSize',32,...
+    'MiniBatchSize',128,...
     'MaxEpochs',10,...
     'Shuffle','every-epoch',...
+    'ValidationData',validImgs_a,...
+    'ValidationFrequency',10,...
     'Verbose',false,...
     'ExecutionEnvironment','gpu');
 
@@ -48,9 +55,6 @@ truetest = testImgs.Labels;
 numCorrect = nnz(testpreds == truetest);
 fracCorrect(h) = numCorrect / numel(testpreds)
 
-%Delete stored augmented data
-delete_aug_images('s');
-delete_aug_images('t');
 end
 
 media=0;

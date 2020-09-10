@@ -3,33 +3,41 @@
 clear  %Clear workspace
 clc    %Clear command window
 
-%Dataset acquisition
-[trainImgs, testImgs] = create_sets(300);
-for h=1:5
+%Clear augmented images
+delete_aug_images('s');
+delete_aug_images('t');
+delete_aug_images('g');
 
+%Dataset acquisition
+[trainImgs, testImg
 
 %Online data augmentation 
 imageAugmenter = imageDataAugmenter('RandRotation',[-90,90],...
     'RandXTranslation',[-10 10],'RandYTranslation',[-10 10],...
-    'RandXReflection',true,'RandYReflection',true);
+    'RandXReflection',true,'RandYReflection',true);s] = create_sets(300);
+
+for h=1:5
 
 trainImgs_a = augmentedImageDatastore([227 227], trainImgs,'ColorPreprocessing','gray2rgb',...
     'DataAugmentation',imageAugmenter);
 
 testImgs_a = augmentedImageDatastore([227 227], testImgs,'ColorPreprocessing','gray2rgb');
+validImgs_a = augmentedImageDatastore([227 227], validImgs,'ColorPreprocessing','gray2rgb');
 
 
 %Modifying pretrained network
 net = alexnet;
 layers = net.Layers;
-layers(end-2) = fullyConnectedLayer(3);
+layers(end-2) = fullyConnectedLayer(4);
 layers(end) = classificationLayer;
 
 %Training options
 options = trainingOptions('adam',...
     'InitialLearnRate',1e-4,...
-    'MiniBatchSize',8,...
+    'MiniBatchSize',32,...
     'MaxEpochs',10,...
+    'ValidationData',validImgs_a,...
+    'ValidationFrequency',10,...
     'Shuffle','every-epoch',...
     'Verbose',false,...
     'ExecutionEnvironment','gpu');
@@ -43,11 +51,8 @@ testpreds = classify(malarianet,testImgs_a);
 %Validation
 truetest = testImgs.Labels;
 numCorrect = nnz(testpreds == truetest);
-fracCorrect(h) = numCorrect / numel(testpreds)
+fracCorrect(h) = numCorrect / numel(testpreds);
 
-%Delete stored augmented data
-delete_aug_images('s');
-delete_aug_images('t');
 end
 
 media=0;

@@ -1,7 +1,7 @@
-function [trainImgs, testImgs] = create_sets(n)
+function [trainImgs, testImgs,ds_r,aug_ds_t_complete,aug_ds_s_complete,aug_ds_g_complete] = create_sets_special(n)
 %create_sets crea un training set con n immagini per classe. Le immagini di
 %classe r sono un sottoinsieme della classe originale. Le immagini di
-%classe g, s e t sono sottoposte a un meccanismo di oversampling tramite
+%classe s e t sono sottoposte a un meccanismo di oversampling tramite
 %augmentation fino a essere n per classe nel training set. Nel test set
 %sono contenute immagini (il 20% di ogni classe) non sottoposte ad
 %augmentation e che la rete non prende in input durante il training.
@@ -14,19 +14,19 @@ function [trainImgs, testImgs] = create_sets(n)
 m = n*10/8;
 
 %Sottoinsieme delle immagini di classe r
-path = 'C:\Users\Corrado\Desktop\Transfer Learning for Malaria Diagnosis\F';
+path = 'C:\Users\User\Documents\Progetto\Dataset\Falciparum';
 ds_r = imageDatastore([path '\r'],'IncludeSubfolders',true,'LabelSource','foldernames');
 ds_r = shuffle(ds_r);
-ds_r = subset(ds_r,1:m);
+ds_r_sub = subset(ds_r,1:m);
 
 
 %Il 20% delle immagini di ogni classe viene inserito nel test set. Le
 %restanti nel training set
 x=m*1/5; 
-ds_r = shuffle(ds_r);
-ds_r_test = subset(ds_r,1:x);
+ds_r_sub = shuffle(ds_r_sub);
+ds_r_test = subset(ds_r_sub,1:x);
 x=x+1;
-ds_r_training = subset(ds_r,x:m);
+ds_r_training = subset(ds_r_sub,x:m);
 
 ds_s = imageDatastore([path '\s'],'IncludeSubfolders',true,'LabelSource','foldernames');
 ds_s = shuffle(ds_s);
@@ -49,9 +49,9 @@ testImgs = merge_sets(ds_r_test,ds_s_test,ds_t_test,ds_g_test);
 
 %Per costruire il training set è necessario aumentare la quantità delle
 %immagini di classe s e t, n per classe.
-[aug_ds_s] = oversampling(n,11,ds_s_training,'s');
-[aug_ds_t] = oversampling(n,18,ds_t_training,'t');
-[aug_ds_g] = oversampling(n,4,ds_g_training,'g');
+[aug_ds_s,aug_ds_s_complete] = oversampling_special(n,13,ds_s_training,'s');
+[aug_ds_t,aug_ds_t_complete] = oversampling_special(n,33,ds_t_training,'t');
+[aug_ds_g,aug_ds_g_complete] = oversampling_special(n,4,ds_g_training,'g');
 
 %Formazione delle n immagini della classe da aggiungere nel training set
 ds_s_training = merge_sets(ds_s_training,aug_ds_s); 
